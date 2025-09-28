@@ -18,3 +18,8 @@ module.exports.createUser = async ({
 
   return user;
 }
+
+// Return a Mongoose Query so callers can chain query helpers like `.select()`
+module.exports.findUserByEmail = (email) => {
+  return userModel.findOne({ email });
+};

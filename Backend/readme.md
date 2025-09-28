@@ -95,3 +95,73 @@ Replace the host/port with your server's address.
 ----
 
 File created to document the `/users/register` endpoint. Keep this README updated when the endpoint behavior or validations change.
+
+## Login Endpoint
+
+This section documents the POST `/users/login` endpoint used to authenticate existing users and return a JWT token.
+
+### Endpoint
+
+- URL: `/users/login`
+- Method: `POST`
+
+### Request
+
+- Content-Type: `application/json`
+
+- Body (JSON):
+
+  {
+    "email": "string (required, valid email)",
+    "password": "string (required, min 6 chars)"
+  }
+
+Validation rules (defined in `routes/user.routes.js`):
+
+- `email`: required, must be a valid email address.
+- `password`: required, minimum length 6.
+
+If validation fails, the endpoint responds with HTTP 400 and a JSON payload containing the validation errors.
+
+### Responses
+
+- 200 OK
+  - Description: Authentication successful.
+  - Body (example):
+
+    {
+      "user": {
+        "_id": "<user id>",
+        "fullname": { "firstname": "John", "lastname": "Doe" },
+        "email": "john@example.com",
+        "socketId": null
+      },
+      "token": "<jwt token>"
+    }
+
+- 400 Bad Request
+  - Description: Input validation failed (missing/invalid email or password length).
+  - Body: same shape as register validation errors: { errors: [...] }
+
+- 401 Unauthorized
+  - Description: Invalid email or password.
+  - Body (example):
+
+    { "message": "Invalid email or password" }
+
+- 500 Internal Server Error
+  - Description: Unexpected error (database, token generation, etc.).
+
+### Example cURL
+
+```bash
+curl -X POST http://localhost:3000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "john@example.com", "password": "secret123" }'
+```
+
+### Notes
+
+- The controller uses `userService.findUserByEmail(email).select('+password')` to fetch the user including the hashed password, and then calls `user.comparePassword(password)` to verify credentials.
+- On success, a JWT token is generated with `user.generateAuthToken()` and returned alongside the user object (password excluded).
+
